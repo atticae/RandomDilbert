@@ -1,10 +1,11 @@
-#!/usr/bin/env python
 from gi.repository import Gtk, Gio
 from gi.repository.GdkPixbuf import Pixbuf
+from datetime import timedelta, date
 
 import random
 import urllib.request
 import re
+
 
 def pixbuf_from_url(url):
     image_data = urllib.request.urlopen(url)
@@ -12,12 +13,19 @@ def pixbuf_from_url(url):
     pixbuf = Pixbuf.new_from_stream(input_stream, None) 
     return pixbuf
 
+def random_date(start,end):
+    start_date = start.toordinal()
+    end_date = end.toordinal()
+    return date.fromordinal(random.randint(start_date, end_date))
+
 class RandomDilbert:
+
+    title = "RandomDilbert Client"
+
     def __init__(self):
         self.window = Gtk.Window()
         self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.set_default_size(670, 430)
-        self.window.set_title("RandomDilbert Client by GKBRK")
         
         self.image = Gtk.Image()
         self.show_random_image()
@@ -41,14 +49,15 @@ class RandomDilbert:
         Gtk.main_quit()
     
     def get_random_image(self):
-        year = random.choice(["2011", "2012", "2013"])
-        month = random.choice(range(1, 13))
-        day = random.choice(range(1, 29))
-        url_to_dilbert_page = "http://www.dilbert.com/%s-%s-%s/" % (year, month, day)
+        rand_date = random_date(date(year=1989,month=4,day=16),date.today())
+        date_string = "%s-%s-%s" % (rand_date.year, rand_date.month, rand_date.day)
+        url_to_dilbert_page = "http://www.dilbert.com/" + date_string
         page_contents = urllib.request.urlopen(url_to_dilbert_page).read().decode('utf-8')
-        image_url = re.search('<a href="/strips/comic/.*?/"><img onload=".*?" src="(.*?)" alt="The Official Dilbert Website featuring Scott Adams Dilbert strips, animations and more" border="0" /></a>', page_contents).group(1)
+        image_url = re.search('<a href="/strips/comic/.*?/"><img.*?src="(.*?)"[^<]*</a>', page_contents).group(1)
         image_url = "http://www.dilbert.com" + image_url
-        #print image_url
+
+        self.window.set_title(self.title + " " + date_string)
+
         return image_url
     
     def show_random_image(self, widget=None, data=None):
