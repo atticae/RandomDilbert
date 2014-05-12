@@ -1,35 +1,33 @@
 #!/usr/bin/env python
-import pygtk
-pygtk.require("2.0")
-import gtk
+from gi.repository import Gtk, Gio
+from gi.repository.GdkPixbuf import Pixbuf
 
 import random
-import urllib
+import urllib2
 import re
 
 def pixbuf_from_url(url):
-    image_data = urllib.urlopen(url)
-    loader = gtk.gdk.PixbufLoader()
-    loader.write(image_data.read())
-    loader.close()
-    return loader.get_pixbuf()
+    image_data = urllib2.urlopen(url)
+    input_stream = Gio.MemoryInputStream.new_from_data(image_data.read(), None) 
+    pixbuf = Pixbuf.new_from_stream(input_stream, None) 
+    return pixbuf
 
 class RandomDilbert:
     def __init__(self):
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_position(gtk.WIN_POS_CENTER)
+        self.window = Gtk.Window()
+        self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.set_default_size(670, 430)
         self.window.set_title("RandomDilbert Client by GKBRK")
         
-        self.image = gtk.Image()
+        self.image = Gtk.Image()
         self.show_random_image()
         
-        self.random_button = gtk.Button("Random Image")
+        self.random_button = Gtk.Button("Random Image")
         self.random_button.connect("clicked", self.show_random_image)
         
-        self.vbox = gtk.VBox()
-        self.vbox.pack_start(self.image)
-        self.vbox.pack_start(self.random_button)
+        self.vbox = Gtk.VBox()
+        self.vbox.pack_start(self.image, True, True, 0)
+        self.vbox.pack_start(self.random_button, True, True, 0)
         
         self.window.add(self.vbox)
         
@@ -37,17 +35,17 @@ class RandomDilbert:
     
     def show(self):
         self.window.show_all()
-        gtk.main()
+        Gtk.main()
     
     def destroy_window(self, widget=None, data=None):
-        gtk.main_quit()
+        Gtk.main_quit()
     
     def get_random_image(self):
         year = random.choice(["2011", "2012", "2013"])
         month = random.choice(range(1, 13))
         day = random.choice(range(1, 29))
         url_to_dilbert_page = "http://www.dilbert.com/%s-%s-%s/" % (year, month, day)
-        page_contents = urllib.urlopen(url_to_dilbert_page).read()
+        page_contents = urllib2.urlopen(url_to_dilbert_page).read()
         image_url = re.search('<a href="/strips/comic/.*?/"><img onload=".*?" src="(.*?)" alt="The Official Dilbert Website featuring Scott Adams Dilbert strips, animations and more" border="0" /></a>', page_contents).group(1)
         image_url = "http://www.dilbert.com" + image_url
         #print image_url
