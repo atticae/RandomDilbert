@@ -3,11 +3,11 @@ from gi.repository import Gtk, Gio
 from gi.repository.GdkPixbuf import Pixbuf
 
 import random
-import urllib2
+import urllib.request
 import re
 
 def pixbuf_from_url(url):
-    image_data = urllib2.urlopen(url)
+    image_data = urllib.request.urlopen(url)
     input_stream = Gio.MemoryInputStream.new_from_data(image_data.read(), None) 
     pixbuf = Pixbuf.new_from_stream(input_stream, None) 
     return pixbuf
@@ -45,7 +45,7 @@ class RandomDilbert:
         month = random.choice(range(1, 13))
         day = random.choice(range(1, 29))
         url_to_dilbert_page = "http://www.dilbert.com/%s-%s-%s/" % (year, month, day)
-        page_contents = urllib2.urlopen(url_to_dilbert_page).read()
+        page_contents = urllib.request.urlopen(url_to_dilbert_page).read().decode('utf-8')
         image_url = re.search('<a href="/strips/comic/.*?/"><img onload=".*?" src="(.*?)" alt="The Official Dilbert Website featuring Scott Adams Dilbert strips, animations and more" border="0" /></a>', page_contents).group(1)
         image_url = "http://www.dilbert.com" + image_url
         #print image_url
