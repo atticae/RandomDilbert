@@ -1,44 +1,16 @@
-from datetime import date
-import random
-import urllib.request
-import re
 import threading
-import collections
+import ComicUtils
+
+from comicreader import DilbertReader, SMBCReader
 
 from gi.repository import Gtk, Gio, GObject
-
-from gi.repository.GdkPixbuf import Pixbuf
-
-image_result = collections.namedtuple('ImageResult', ['url', 'date', 'title'])
-
-
-def get_random_dilbert_image():
-    rand_date = random_date(date(year=1989,month=4,day=16),date.today())
-    date_string = "%s-%s-%s" % (rand_date.year, rand_date.month, rand_date.day)
-    url_to_dilbert_page = "http://www.dilbert.com/" + date_string
-    page_contents = urllib.request.urlopen(url_to_dilbert_page).read().decode('utf-8')
-    image_url = re.search('<a href="/strips/comic/.*?/"><img.*?src="(.*?)"[^<]*</a>', page_contents).group(1)
-    image_url = "http://www.dilbert.com" + image_url
-
-    return image_result(image_url, rand_date, date_string)
-
-
-def pixbuf_from_url(url):
-    image_data = urllib.request.urlopen(url)
-    input_stream = Gio.MemoryInputStream.new_from_data(image_data.read(), None) 
-    pixbuf = Pixbuf.new_from_stream(input_stream, None) 
-    return pixbuf
-
-
-def random_date(start,end):
-    start_date = start.toordinal()
-    end_date = end.toordinal()
-    return date.fromordinal(random.randint(start_date, end_date))
 
 
 class RandomDilbert:
 
     title = "RandomDilbert Client"
+    dilbert = DilbertReader()
+    smbc = SMBCReader()
 
     def __init__(self):
         self.cached_image = None
@@ -46,6 +18,8 @@ class RandomDilbert:
         self.window = Gtk.Window()
         self.window.set_position(Gtk.WindowPosition.CENTER)
         self.window.set_default_size(670, 430)
+
+        scrolled_window = Gtk.ScrolledWindow()
 
         self.random_button = Gtk.Button("Random Image")
         self.random_button.connect("clicked", self.show_cached_image)
@@ -58,7 +32,9 @@ class RandomDilbert:
         self.vbox.pack_start(self.image, True, True, 0)
         self.vbox.pack_start(self.random_button, True, True, 0)
         
-        self.window.add(self.vbox)
+        scrolled_window.add_with_viewport(self.vbox)
+
+        self.window.add(scrolled_window)
         
         self.window.connect("destroy", self.destroy_window)
     
@@ -73,8 +49,8 @@ class RandomDilbert:
         self.random_button.set_sensitive(True)
 
     def cache_image(self):
-        res = get_random_dilbert_image()
-        self.cached_image = pixbuf_from_url(res.url)
+        res = self.smbc.get_random_image()
+        self.cached_image = ComicUtils.pixbuf_from_url(res.url)
         self.cached_title = self.title + " " + res.title
         GObject.idle_add(self.activate_button)
 
